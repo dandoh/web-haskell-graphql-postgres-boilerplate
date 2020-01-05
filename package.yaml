@@ -36,6 +36,7 @@ default-extensions:
   - QuasiQuotes
   - ScopedTypeVariables
   - LambdaCase
+  - NamedFieldPuns
 
 
 dependencies:
@@ -55,8 +56,12 @@ dependencies:
   - unordered-containers
   - morpheus-graphql
   - scotty
+  - envy
+  - load-env
   - stm
   - http-types
+  - jwt
+  - containers
 
 
 library:
