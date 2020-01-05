@@ -44,6 +44,10 @@ dependencies:
   - transformers
   - text
   - mtl
+  - product-profunctors
+  - postgresql-simple
+  - postgresql-simple-url
+  - resource-pool
   - time
   - monad-control
   - yaml

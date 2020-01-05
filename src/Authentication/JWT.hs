@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module JWT where
+module Authentication.JWT where
 
 import Data.Aeson.Types (Value(Bool, Number))
 import qualified Data.Map as Map
