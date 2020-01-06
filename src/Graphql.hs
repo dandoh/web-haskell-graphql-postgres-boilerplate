@@ -6,18 +6,23 @@ module Graphql where
 
 import Control.Monad.Base (MonadBase)
 import Control.Monad.Except (ExceptT, MonadError)
-import Control.Monad.Reader (MonadReader, ReaderT)
-import Control.Monad.Trans (MonadIO, MonadTrans)
+import Control.Monad.Reader (MonadReader, ReaderT, asks)
+import Control.Monad.Trans (MonadIO, MonadTrans, liftIO)
 import Control.Monad.Trans.Control (MonadBaseControl)
 import Data.Morpheus.Document (importGQLDocument)
 import Data.Morpheus.Types
 import Data.Morpheus.Types.Internal.AST (OperationType)
-import Data.Pool (Pool)
+import Data.Pool (Pool, withResource)
+import Data.Profunctor.Product.Default (Default)
 import Data.Text (Text)
 import qualified Data.Text as T
 import Database.PostgreSQL.Simple (Connection)
+import Database.User
+import qualified Opaleye
+import Opaleye (FromFields, Select)
 
--- |
+import Database.Model (UserData, UserField) -- |
+
 --
 -------------------------------------------------------------------------------
 type Headers = [(Text, Text)]
@@ -40,6 +45,15 @@ newtype Web a =
              , MonadBase IO
              , MonadBaseControl IO
              )
+
+-- | 
+--
+runSelect ::
+       Default FromFields fields haskells => Select fields -> Web [haskells]
+runSelect select = do
+    db <- asks dbPool
+    liftIO $
+        withResource db $ \connection -> Opaleye.runSelect connection select
 
 -- |
 --
@@ -75,8 +89,16 @@ rootResolver :: GQLRootResolver Web () Query Mutation Undefined
 rootResolver =
     GQLRootResolver
         { queryResolver = Query {login = undefined}
-        , mutationResolver = Mutation {register = undefined}
+        , mutationResolver = Mutation {register = registerResolver}
         , subscriptionResolver = Undefined
         }
 
-
+-------------------------------------------------------------------------------
+registerResolver :: RegisterArgs -> OptionalObject MUTATION Session
+registerResolver RegisterArgs {email, password, name} = do
+    db <- lift $ asks dbPool
+    res <- lift $ runSelect @UserField @UserData $ findUserByEmail email
+    case res of 
+        _:_ -> failRes "This email is already taken"
+        [] -> do 
+            undefined

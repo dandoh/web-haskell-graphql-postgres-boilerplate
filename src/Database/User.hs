@@ -29,10 +29,9 @@ insertUser (userEmail, userPasswordHash, userName) =
         }
 
 -------------------------------------------------------------------------------
-findUserByEmailPasswordHash :: (Text, Text) -> Select UserField
-findUserByEmailPasswordHash (email, passwordHash) =
+findUserByEmail :: Text -> Select UserField
+findUserByEmail email =
     proc () ->
   do user <- userSelect -< ()
      restrict -< (userEmail user) .== toFields email
-     restrict -< (userPasswordHash user) .== toFields passwordHash
      returnA -< user
