@@ -5,12 +5,18 @@ module Config where
 import Control.Monad.IO.Class (liftIO)
 import Control.Monad.Trans.Class (lift)
 import Control.Monad.Trans.Maybe (MaybeT)
-import System.Environment (lookupEnv)
 import Data.Text (Text)
 import LoadEnv
+import System.Environment (lookupEnv)
 
 import GHC.Generics
 import System.Envy
+import Control.Monad.Except (ExceptT(..))
+
+-- | 
+--
+-------------------------------------------------------------------------------
+type Init a = ExceptT String IO a
 
 data Config =
     Config
@@ -29,5 +35,8 @@ instance DefConfig Config where
 
 instance FromEnv Config
 
-loadConfig :: IO (Either String Config)
-loadConfig = loadEnv >> decodeEnv
+loadConfig :: Init Config
+loadConfig = 
+    ExceptT $ liftIO $ loadEnv >> decodeEnv
+
+

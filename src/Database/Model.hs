@@ -1,34 +1,37 @@
 module Database.Model where
 
 import Data.Profunctor.Product.TH (makeAdaptorAndInstance)
+import Data.Text (Text)
 import Opaleye
 
 -------------------------------------------------------------------------------
-
-data User' a b c =
-    User
+data UserData' a b c d =
+    UserData
         { userId :: a
         , userEmail :: b
         , userPasswordHash :: c
+        , userName :: d
         }
 
-type User = User' Int String String
+type UserData = UserData' Int Text Text Text
 
-type UserField = User' (Field SqlInt4) (Field SqlText) (Field SqlText)
+type UserWrite
+     = UserData' (Maybe (Field SqlInt4)) (Field SqlText) (Field SqlText) (Field SqlText)
 
-$(makeAdaptorAndInstance "pUser" ''User')
+type UserRead
+ = UserData' (Field SqlInt4) (Field SqlText) (Field SqlText) (Field SqlText)
 
-userTable :: Table UserField UserField
+$(makeAdaptorAndInstance "pUser" ''UserData')
+
+userTable :: Table UserWrite UserRead
 userTable =
     table
         "users"
         (pUser
-             User
+             UserData
                  { userId = tableField "id"
                  , userEmail = tableField "email"
                  , userPasswordHash = tableField "password_hash"
+                 , userName = tableField "name"
                  })
-
 -------------------------------------------------------------------------------
-    
-

@@ -1,9 +1,13 @@
 -- migrate:up
-create table users (
-    id integer not null,
-    email varchar not null,
-    password_hash varchar not null
+create table users
+(
+    id            serial,
+    email         varchar not null unique,
+    password_hash varchar not null,
+    name          varchar not null
 );
+
+create unique index users_id on users (id);
 
 -- migrate:down
 drop table users;

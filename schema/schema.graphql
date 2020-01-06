@@ -1,15 +1,6 @@
-
-type Dog {
-    id: Int!
-    name: String!
-    owner: User!
-}
-
 type User {
     id: Int!
     name: String!
-    follows: [User!]!
-    favoriteDog: Dog
 }
 
 type Session {
@@ -18,11 +9,9 @@ type Session {
 }
 
 type Query {
-    login(username: String!, password: String!): Session
-    getUser(id: Int!): User
-    dogs: [Dog!]!
+    login(email: String!, password: String!): Session
 }
 
 type Mutation {
-    addDog(name: String!): Dog!
+    register(email: String!, password: String!, name: String!): Session
 }
