@@ -4,6 +4,9 @@
 
 module Graphql where
 
+import Authentication.JWT
+import Authentication.Password
+import Config
 import Control.Monad.Base (MonadBase)
 import Control.Monad.Except (ExceptT, MonadError)
 import Control.Monad.Reader (MonadReader, ReaderT, asks)
@@ -16,9 +19,11 @@ import Data.Pool (Pool, withResource)
 import Data.Profunctor.Product.Default (Default)
 import Data.Text (Text)
 import qualified Data.Text as T
+import Data.Time.Clock (getCurrentTime)
 import Database.Model
 import Database.PostgreSQL.Simple (Connection)
 import Database.User
+import GHC.Int (Int64)
 import qualified Opaleye
 import Opaleye (FromFields, Select)
 
@@ -30,6 +35,7 @@ data Env =
     Env
         { reqHeaders :: Headers
         , dbPool :: Pool Connection
+        , config :: Config
         }
 
 newtype Web a =
@@ -53,6 +59,14 @@ runSelect select = do
     db <- asks dbPool
     liftIO $
         withResource db $ \connection -> Opaleye.runSelect connection select
+
+-- | 
+--
+runInsert :: Opaleye.Insert haskells -> Web haskells
+runInsert insert = do
+    db <- asks dbPool
+    liftIO $
+        withResource db $ \connection -> Opaleye.runInsert_ connection insert
 
 -- |
 --
@@ -87,20 +101,34 @@ type GraphQL o
 rootResolver :: GQLRootResolver Web () Query Mutation Undefined
 rootResolver =
     GQLRootResolver
-        { queryResolver = Query {login = undefined}
+        { queryResolver = Query {login = loginResolver}
         , mutationResolver = Mutation {register = registerResolver}
         , subscriptionResolver = Undefined
         }
 
 -------------------------------------------------------------------------------
-registerResolver :: RegisterArgs -> OptionalObject MUTATION Session
+loginResolver :: GraphQL o => LoginArgs -> Object o Session
+loginResolver LoginArgs {email, password} = do
+    res <- lift $ runSelect @UserField @UserData $ findUserByEmail email
+    case res of
+        [userData]
+            | validateHashedPassword (userPasswordHash userData) password -> do
+                time <- liftIO getCurrentTime
+                secret <- lift $ asks (jwtSecret . config)
+                let jwt = makeJWT time secret (userId userData)
+                return Session {token = pure jwt, user = userResolver userData}
+        _ -> failRes "Wrong email or password"
+
+-------------------------------------------------------------------------------
+registerResolver :: RegisterArgs -> Object MUTATION Session
 registerResolver RegisterArgs {email, password, name} = do
-    db <- lift $ asks dbPool
     res <- lift $ runSelect @UserField @UserData $ findUserByEmail email
     case res of
         _:_ -> failRes "This email is already taken"
         [] -> do
-            undefined
+            ph <- liftIO $ hashPassword password
+            lift $ runInsert $ insertUser (email, ph, name)
+            loginResolver LoginArgs {email, password}
 
 -------------------------------------------------------------------------------
 userResolver :: GraphQL o => UserData -> Object o User

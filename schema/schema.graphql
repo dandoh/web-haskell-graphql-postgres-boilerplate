@@ -10,9 +10,9 @@ type Session {
 }
 
 type Query {
-    login(email: String!, password: String!): Session
+    login(email: String!, password: String!): Session!
 }
 
 type Mutation {
-    register(email: String!, password: String!, name: String!): Session
+    register(email: String!, password: String!, name: String!): Session!
 }
