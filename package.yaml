@@ -23,6 +23,7 @@ default-extensions:
   - OverloadedStrings
   - DeriveGeneric
   - GADTs
+  - Arrows
   - OverloadedStrings
   - FlexibleContexts
   - FlexibleInstances

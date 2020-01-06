@@ -15,15 +15,15 @@ data UserData' a b c d =
 
 type UserData = UserData' Int Text Text Text
 
-type UserWrite
+type UserWriteField
      = UserData' (Maybe (Field SqlInt4)) (Field SqlText) (Field SqlText) (Field SqlText)
 
-type UserRead
- = UserData' (Field SqlInt4) (Field SqlText) (Field SqlText) (Field SqlText)
+type UserField
+     = UserData' (Field SqlInt4) (Field SqlText) (Field SqlText) (Field SqlText)
 
 $(makeAdaptorAndInstance "pUser" ''UserData')
 
-userTable :: Table UserWrite UserRead
+userTable :: Table UserWriteField UserField
 userTable =
     table
         "users"
