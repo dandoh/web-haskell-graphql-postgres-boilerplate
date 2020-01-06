@@ -2,6 +2,26 @@
 - Graphql API
   - morpheus-graphql (https://github.com/morpheusgraphql/morpheus-graphql)
   - Schema is in `schema/schema.graphql`
+  ```graphql
+  type User {
+    id: Int!
+    email: String!
+    name: String!
+  }
+
+  type Session {
+    token: String!
+    user: User!
+  }
+
+  type Query {
+    login(email: String!, password: String!): Session!
+  }
+
+  type Mutation {
+    register(email: String!, password: String!, name: String!): Session!
+  }
+  ```
 - Database:
   - Postgresql + Opaleye
   - Migration using `dbmate` (https://github.com/amacneil/dbmate)
