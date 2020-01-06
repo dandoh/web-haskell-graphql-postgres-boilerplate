@@ -30,18 +30,14 @@ resolver: lts-14.16
 #   - wai
 packages:
   - .
-  - ../morpheus-graphql
+#  - ../morpheus-graphql
 # Dependency packages to be pulled from upstream that are not in the resolver.
 # These entries can reference officially published versions as well as
 # forks / in-progress versions pinned to a git hash. For example:
 #
-# extra-deps:
-# - acme-missiles-0.3
-# - git: https://github.com/commercialhaskell/stack.git
-#   commit: e7b331f14bcffb8367cd58fbfc8b40ec7642100a
-#
 extra-deps:
-  - timeout-0.1.1@sha256:56c1d3321d7139d1f7ebf04d46c95d3a3f1c8c9e0f15666ae3ccd6bae6204b6e,1427
+  - git: https://github.com/morpheusgraphql/morpheus-graphql.git
+    commit: 45234ceabe6c227a2ff19e1557b06773501633d8
 
 
 # Override default flag values for local packages and extra-deps

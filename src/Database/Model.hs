@@ -15,6 +15,7 @@ data UserData' a b c d =
 
 type UserData = UserData' Int Text Text Text
 
+-- `Maybe userId` because inserting doesn't require id
 type UserWriteField
      = UserData' (Maybe (Field SqlInt4)) (Field SqlText) (Field SqlText) (Field SqlText)
 

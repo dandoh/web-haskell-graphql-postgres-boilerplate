@@ -52,10 +52,8 @@ dependencies:
   - resource-pool
   - time
   - monad-control
-  - yaml
   - bytestring
   - scientific
-  - network-uri
   - exceptions
   - extra
   - aeson
@@ -66,7 +64,6 @@ dependencies:
   - envy
   - load-env
   - stm
-  - http-types
   - jwt
   - containers
   - transformers-base

@@ -12,6 +12,7 @@ import Control.Monad.Except (ExceptT, MonadError)
 import Control.Monad.Reader (MonadReader, ReaderT, asks)
 import Control.Monad.Trans (MonadIO, MonadTrans, liftIO)
 import Control.Monad.Trans.Control (MonadBaseControl)
+import qualified Data.ByteString.Lazy.Char8 as B
 import Data.Morpheus.Document (importGQLDocument)
 import Data.Morpheus.Types
 import Data.Morpheus.Types.Internal.AST (OperationType)
@@ -19,6 +20,7 @@ import Data.Pool (Pool, withResource)
 import Data.Profunctor.Product.Default (Default)
 import Data.Text (Text)
 import qualified Data.Text as T
+import qualified Data.Text.Lazy as LT
 import Data.Time.Clock (getCurrentTime)
 import Database.Model
 import Database.PostgreSQL.Simple (Connection)
@@ -26,6 +28,7 @@ import Database.User
 import GHC.Int (Int64)
 import qualified Opaleye
 import Opaleye (FromFields, Select)
+import Data.Morpheus (interpreter)
 
 --
 -------------------------------------------------------------------------------
@@ -33,9 +36,9 @@ type Headers = [(Text, Text)]
 
 data Env =
     Env
-        { reqHeaders :: Headers
-        , dbPool :: Pool Connection
+        { dbPool :: Pool Connection
         , config :: Config
+        , currentUserId :: Maybe Int
         }
 
 newtype Web a =
@@ -109,7 +112,7 @@ rootResolver =
 -------------------------------------------------------------------------------
 loginResolver :: GraphQL o => LoginArgs -> Object o Session
 loginResolver LoginArgs {email, password} = do
-    res <- lift $ runSelect @UserField @UserData $ findUserByEmail email
+    res <- lift $ runSelect $ findUserByEmail email
     case res of
         [userData]
             | validateHashedPassword (userPasswordHash userData) password -> do
@@ -122,7 +125,7 @@ loginResolver LoginArgs {email, password} = do
 -------------------------------------------------------------------------------
 registerResolver :: RegisterArgs -> Object MUTATION Session
 registerResolver RegisterArgs {email, password, name} = do
-    res <- lift $ runSelect @UserField @UserData $ findUserByEmail email
+    res :: [UserData] <- lift $ runSelect $ findUserByEmail email
     case res of
         _:_ -> failRes "This email is already taken"
         [] -> do
@@ -134,3 +137,10 @@ registerResolver RegisterArgs {email, password, name} = do
 userResolver :: GraphQL o => UserData -> Object o User
 userResolver UserData {userId, userEmail, userName} =
     return User {id = pure userId, email = pure userEmail, name = pure userName}
+
+-------------------------------------------------------------------------------
+-- | 
+--
+api :: B.ByteString -> Web B.ByteString
+api = interpreter rootResolver
+
