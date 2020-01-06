@@ -16,12 +16,11 @@ import Data.Pool (Pool, withResource)
 import Data.Profunctor.Product.Default (Default)
 import Data.Text (Text)
 import qualified Data.Text as T
+import Database.Model
 import Database.PostgreSQL.Simple (Connection)
 import Database.User
 import qualified Opaleye
 import Opaleye (FromFields, Select)
-
-import Database.Model (UserData, UserField) -- |
 
 --
 -------------------------------------------------------------------------------
@@ -98,7 +97,12 @@ registerResolver :: RegisterArgs -> OptionalObject MUTATION Session
 registerResolver RegisterArgs {email, password, name} = do
     db <- lift $ asks dbPool
     res <- lift $ runSelect @UserField @UserData $ findUserByEmail email
-    case res of 
+    case res of
         _:_ -> failRes "This email is already taken"
-        [] -> do 
+        [] -> do
             undefined
+
+-------------------------------------------------------------------------------
+userResolver :: GraphQL o => UserData -> Object o User
+userResolver UserData {userId, userEmail, userName} =
+    return User {id = pure userId, email = pure userEmail, name = pure userName}
