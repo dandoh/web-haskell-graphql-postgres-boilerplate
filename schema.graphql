@@ -11,8 +11,10 @@ type Session {
 
 type Query {
     login(email: String!, password: String!): Session!
+    myUserInfo: User!
 }
 
 type Mutation {
     register(email: String!, password: String!, name: String!): Session!
+    changePassword(oldPassword: String!, newPassword: String!): Boolean!
 }

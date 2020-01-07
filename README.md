@@ -3,24 +3,26 @@
   - morpheus-graphql (https://github.com/morpheusgraphql/morpheus-graphql)
   - Schema is in `schema.graphql`
   ```graphql
-  type User {
-    id: Int!
-    email: String!
-    name: String!
-  }
+    type User {
+        id: Int!
+        email: String!
+        name: String!
+    }
 
-  type Session {
-    token: String!
-    user: User!
-  }
+    type Session {
+        token: String!
+        user: User!
+    }
 
-  type Query {
-    login(email: String!, password: String!): Session!
-  }
+    type Query {
+        login(email: String!, password: String!): Session!
+        myUserInfo: User!
+    }
 
-  type Mutation {
-    register(email: String!, password: String!, name: String!): Session!
-  }
+    type Mutation {
+        register(email: String!, password: String!, name: String!): Session!
+        changePassword(oldPassword: String!, newPassword: String!): Boolean!
+    }
   ```
 - Database:
   - Postgresql + Opaleye
@@ -33,7 +35,7 @@ This boilerplate wires up:
 - Graphql API
   - `login(email: String, password: String) { token user { id } }`
   - `register(email: String, password: String, name: String) { token user { id } }`
-- Authentication using JWT
+- Authorization using JWT
 - Monad transformers
 
 ## Running

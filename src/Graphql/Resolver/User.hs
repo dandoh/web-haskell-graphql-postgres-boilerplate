@@ -3,18 +3,13 @@ module Graphql.Resolver.User where
 import Authentication.JWT
 import Authentication.Password
 import Config
-import Control.Monad.Base (MonadBase)
-import Control.Monad.Except (ExceptT, MonadError)
 import Control.Monad.Reader (MonadReader, ReaderT, asks)
 import Control.Monad.Trans (MonadIO, MonadTrans, liftIO)
-import Control.Monad.Trans.Control (MonadBaseControl)
 import qualified Data.ByteString.Lazy.Char8 as B
 import Data.Morpheus (interpreter)
 import Data.Morpheus.Document (importGQLDocument)
 import Data.Morpheus.Types
 import Data.Morpheus.Types.Internal.AST (OperationType)
-import Data.Pool (Pool, withResource)
-import Data.Profunctor.Product.Default (Default)
 import Data.Text (Text)
 import qualified Data.Text as T
 import qualified Data.Text.Lazy as LT
@@ -24,8 +19,6 @@ import Database.PostgreSQL.Simple (Connection)
 import Database.User
 import GHC.Int (Int64)
 import Graphql
-import qualified Opaleye
-import Opaleye (FromFields, Select)
 
 -------------------------------------------------------------------------------
 userResolver :: GraphQL o => UserData -> Object o User
@@ -35,7 +28,7 @@ userResolver UserData {userId, userEmail, userName} =
 -------------------------------------------------------------------------------
 loginResolver :: GraphQL o => LoginArgs -> Object o Session
 loginResolver LoginArgs {email, password} = do
-    res <- lift $ runSelect $ findUserByEmail email
+    res <- runSelect $ findUserByEmail email
     case res of
         [userData]
             | validateHashedPassword (userPasswordHash userData) password -> do
@@ -48,10 +41,28 @@ loginResolver LoginArgs {email, password} = do
 -------------------------------------------------------------------------------
 registerResolver :: RegisterArgs -> Object MUTATION Session
 registerResolver RegisterArgs {email, password, name} = do
-    res :: [UserData] <- lift $ runSelect $ findUserByEmail email
+    res :: [UserData] <- runSelect $ findUserByEmail email
     case res of
         _:_ -> failRes "This email is already taken"
         [] -> do
             ph <- liftIO $ hashPassword password
-            lift $ runInsert $ insertUser (email, ph, name)
+            runInsert $ insertUser (email, ph, name)
             loginResolver LoginArgs {email, password}
+
+-------------------------------------------------------------------------------
+myUserInfoResolver :: Object QUERY User
+myUserInfoResolver = do
+    myUserId <- requireAuthorized
+    runSelectOne (findUserByID myUserId) "Invalid user" >>= userResolver
+
+-------------------------------------------------------------------------------
+changePasswordResolver :: ChangePasswordArgs -> Value MUTATION Bool
+changePasswordResolver ChangePasswordArgs {oldPassword, newPassword} = do
+    myUserId <- requireAuthorized
+    userData :: UserData <- runSelectOne (findUserByID myUserId) "Invalid user"
+    if validateHashedPassword (userPasswordHash userData) oldPassword
+        then do
+            ph <- liftIO $ hashPassword newPassword
+            runUpdate $ updateUserPassword myUserId ph
+            return True
+        else failRes "Wrong old password"

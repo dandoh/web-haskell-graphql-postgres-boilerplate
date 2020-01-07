@@ -27,15 +27,17 @@ import Database.PostgreSQL.Simple (Connection)
 import Database.User
 import GHC.Int (Int64)
 import qualified Opaleye
-import Opaleye (FromFields, Insert, Select)
+import Opaleye (FromFields, Insert, Select, Update)
 
 --
 -------------------------------------------------------------------------------
+type UserID = Int
+
 data Env =
     Env
         { dbPool :: Pool Connection
         , config :: Config
-        , currentUserId :: Maybe Int
+        , currentUserId :: Maybe UserID
         }
 
 newtype Web a =
@@ -50,21 +52,6 @@ newtype Web a =
              , MonadBase IO
              , MonadBaseControl IO
              )
-
--- |
-runSelect ::
-       Default FromFields fields haskells => Select fields -> Web [haskells]
-runSelect select = do
-    db <- asks dbPool
-    liftIO $
-        withResource db $ \connection -> Opaleye.runSelect connection select
-
--- |
-runInsert :: Insert haskells -> Web haskells
-runInsert insert = do
-    db <- asks dbPool
-    liftIO $
-        withResource db $ \connection -> Opaleye.runInsert_ connection insert
 
 -- |
 -------------------------------------------------------------------------------
@@ -89,3 +76,51 @@ type GraphQL o
      = ( MonadIO (Resolver o () Web)
        , WithOperation o
        , MonadTrans (Resolver o ()))
+
+-------------------------------------------------------------------------------
+-- |
+runSelect ::
+       GraphQL o
+    => Default FromFields fields haskells =>
+           Select fields -> Value o [haskells]
+runSelect select = do
+    db <- lift $ asks dbPool
+    liftIO $
+        withResource db $ \connection -> Opaleye.runSelect connection select
+
+-------------------------------------------------------------------------------
+runSelectOne ::
+       GraphQL o
+    => Default FromFields fields haskells =>
+           Select fields -> String -> Value o haskells
+runSelectOne select errorMsg = do
+    db <- lift $ asks dbPool
+    xs <-
+        liftIO $
+        withResource db $ \connection -> Opaleye.runSelect connection select
+    case xs of
+        [x] -> return x
+        _ -> failRes errorMsg
+
+-------------------------------------------------------------------------------
+-- |
+runInsert :: GraphQL o => Insert haskells -> Value o haskells
+runInsert insert = do
+    db <- lift $ asks dbPool
+    liftIO $
+        withResource db $ \connection -> Opaleye.runInsert_ connection insert
+
+-------------------------------------------------------------------------------
+runUpdate :: GraphQL o => Update haskells -> Value o haskells
+runUpdate update = do
+    db <- lift $ asks dbPool
+    liftIO $
+        withResource db $ \connection -> Opaleye.runUpdate_ connection update
+
+-------------------------------------------------------------------------------
+requireAuthorized :: GraphQL o => Value o UserID
+requireAuthorized = do
+    maybeID <- lift $ asks currentUserId
+    case maybeID of
+        Just id -> return id
+        _ -> failRes "Not authorized"

@@ -34,3 +34,24 @@ findUserByEmail email =
   do user <- userSelect -< ()
      restrict -< userEmail user .== toFields email
      returnA -< user
+
+-------------------------------------------------------------------------------
+findUserByID :: Int -> Select UserF
+findUserByID id =
+    proc () ->
+  do user <- userSelect -< ()
+     restrict -< userId user .== toFields id
+     returnA -< user
+
+-------------------------------------------------------------------------------
+updateUserPassword :: Int -> Text -> Update Int64
+updateUserPassword id newPasswordHash =
+    Update
+        { uTable = userTable
+        , uUpdateWith =
+              updateEasy
+                  (\userData ->
+                       userData {userPasswordHash = toFields newPasswordHash})
+        , uWhere = ((.==) (toFields id)) . userId
+        , uReturning = rCount
+        }
