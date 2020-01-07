@@ -36,9 +36,7 @@ packages:
 # forks / in-progress versions pinned to a git hash. For example:
 #
 extra-deps:
-  - git: https://github.com/morpheusgraphql/morpheus-graphql.git
-    commit: 45234ceabe6c227a2ff19e1557b06773501633d8
-
+  - morpheus-graphql-0.10.0
 
 # Override default flag values for local packages and extra-deps
 # flags: {}
