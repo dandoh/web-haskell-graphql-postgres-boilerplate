@@ -37,4 +37,20 @@ This boilerplate wires up:
 - Monad transformers
 
 ## Running
-
+- Feed in you database & secret in `.env`:
+  ```terminal
+  $ cp .env.default .env
+  ```
+  ```env
+  DATABASE_URL="postgres://Dandoh:dandoh@127.0.0.1:5432/webhaskell?sslmode=disable"
+  JWT_SECRET="my_jwt_secret"
+  ```
+- Migrations
+  ```terminal
+  $ dbmate up
+  ```
+  - More uses refer https://github.com/amacneil/dbmate
+- Run webserver
+  ```terminal
+  stack run
+  ```

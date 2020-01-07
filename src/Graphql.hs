@@ -68,7 +68,7 @@ runInsert insert = do
 
 -- |
 -------------------------------------------------------------------------------
-importGQLDocument "schema/schema.graphql"
+importGQLDocument "schema.graphql"
 
 -------------------------------------------------------------------------------
 -- | Resolve single value
