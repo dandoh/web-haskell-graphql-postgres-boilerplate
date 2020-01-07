@@ -14,7 +14,6 @@ import Prelude hiding (exp)
 import Web.JWT
 
 -------------------------------------------------------------------------------
-
 type SecretKey = Text
 
 type Token = Text

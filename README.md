@@ -1,7 +1,7 @@
-# Haskell Webserver Skeleton
+# Modern Haskell Webserver Boilerplate
 - Graphql API
   - morpheus-graphql (https://github.com/morpheusgraphql/morpheus-graphql)
-  - Schema is in `schema/schema.graphql`
+  - Schema is in `schema.graphql`
   ```graphql
   type User {
     id: Int!
@@ -27,7 +27,7 @@
   - Migration using `dbmate` (https://github.com/amacneil/dbmate)
   - Pooling using `Data.Pool`
 
-The skeleton wires up:
+This boilerplate wires up:
 - Reading .env using `envy`
 - Database
 - Graphql API

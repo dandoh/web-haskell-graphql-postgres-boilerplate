@@ -5,6 +5,9 @@ import Data.Text (Text)
 import Opaleye
 
 -------------------------------------------------------------------------------
+type F a = Field a
+
+-------------------------------------------------------------------------------
 data UserData' a b c d =
     UserData
         { userId :: a
@@ -16,15 +19,14 @@ data UserData' a b c d =
 type UserData = UserData' Int Text Text Text
 
 -- `Maybe userId` because inserting doesn't require id
-type UserWriteField
-     = UserData' (Maybe (Field SqlInt4)) (Field SqlText) (Field SqlText) (Field SqlText)
+type UserWriteF
+     = UserData' (Maybe (F SqlInt4)) (F SqlText) (F SqlText) (F SqlText)
 
-type UserField
-     = UserData' (Field SqlInt4) (Field SqlText) (Field SqlText) (Field SqlText)
+type UserF = UserData' (F SqlInt4) (F SqlText) (F SqlText) (F SqlText)
 
 $(makeAdaptorAndInstance "pUser" ''UserData')
 
-userTable :: Table UserWriteField UserField
+userTable :: Table UserWriteF UserF
 userTable =
     table
         "users"

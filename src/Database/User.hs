@@ -2,13 +2,12 @@ module Database.User where
 
 import Control.Arrow (returnA)
 import Data.Text (Text)
-import Database.Common
 import Database.Model
 import GHC.Int (Int64)
 import Opaleye
 
 -------------------------------------------------------------------------------
-userSelect :: Select UserField
+userSelect :: Select UserF
 userSelect = selectTable userTable
 
 -------------------------------------------------------------------------------
@@ -29,9 +28,9 @@ insertUser (userEmail, userPasswordHash, userName) =
         }
 
 -------------------------------------------------------------------------------
-findUserByEmail :: Text -> Select UserField
+findUserByEmail :: Text -> Select UserF
 findUserByEmail email =
     proc () ->
   do user <- userSelect -< ()
-     restrict -< (userEmail user) .== toFields email
+     restrict -< userEmail user .== toFields email
      returnA -< user

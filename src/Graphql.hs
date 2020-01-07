@@ -1,6 +1,6 @@
-{-# LANGUAGE UndecidableInstances #-}
-{-# LANGUAGE DataKinds #-}
 {-# LANGUAGE ConstraintKinds #-}
+{-# LANGUAGE DataKinds #-}
+{-# LANGUAGE UndecidableInstances #-}
 
 module Graphql where
 
@@ -12,7 +12,7 @@ import Control.Monad.Except (ExceptT, MonadError)
 import Control.Monad.Reader (MonadReader, ReaderT, asks)
 import Control.Monad.Trans (MonadIO, MonadTrans, liftIO)
 import Control.Monad.Trans.Control (MonadBaseControl)
-import qualified Data.ByteString.Lazy.Char8 as B
+import Data.Morpheus (interpreter)
 import Data.Morpheus.Document (importGQLDocument)
 import Data.Morpheus.Types
 import Data.Morpheus.Types.Internal.AST (OperationType)
@@ -27,13 +27,10 @@ import Database.PostgreSQL.Simple (Connection)
 import Database.User
 import GHC.Int (Int64)
 import qualified Opaleye
-import Opaleye (FromFields, Select)
-import Data.Morpheus (interpreter)
+import Opaleye (FromFields, Insert, Select)
 
 --
 -------------------------------------------------------------------------------
-type Headers = [(Text, Text)]
-
 data Env =
     Env
         { dbPool :: Pool Connection
@@ -54,8 +51,7 @@ newtype Web a =
              , MonadBaseControl IO
              )
 
--- | 
---
+-- |
 runSelect ::
        Default FromFields fields haskells => Select fields -> Web [haskells]
 runSelect select = do
@@ -63,35 +59,29 @@ runSelect select = do
     liftIO $
         withResource db $ \connection -> Opaleye.runSelect connection select
 
--- | 
---
-runInsert :: Opaleye.Insert haskells -> Web haskells
+-- |
+runInsert :: Insert haskells -> Web haskells
 runInsert insert = do
     db <- asks dbPool
     liftIO $
         withResource db $ \connection -> Opaleye.runInsert_ connection insert
 
 -- |
---
 -------------------------------------------------------------------------------
 importGQLDocument "schema/schema.graphql"
 
 -------------------------------------------------------------------------------
 -- | Resolve single value
---
 type Value (o :: OperationType) a = Resolver o () Web a
 
 -- | Resolve object (which includes other fields that need their own resolvers)
---
 type Object (o :: OperationType) a = Resolver o () Web (a (Resolver o () Web))
 
 -- | Resolve (Maybe object)
---
 type OptionalObject (o :: OperationType) a
      = Resolver o () Web (Maybe (a (Resolver o () Web)))
 
 -- | Resolve [object]
---
 type ArrayObject (o :: OperationType) a
      = Resolver o () Web [a (Resolver o () Web)]
 
@@ -99,48 +89,3 @@ type GraphQL o
      = ( MonadIO (Resolver o () Web)
        , WithOperation o
        , MonadTrans (Resolver o ()))
-
--------------------------------------------------------------------------------
-rootResolver :: GQLRootResolver Web () Query Mutation Undefined
-rootResolver =
-    GQLRootResolver
-        { queryResolver = Query {login = loginResolver}
-        , mutationResolver = Mutation {register = registerResolver}
-        , subscriptionResolver = Undefined
-        }
-
--------------------------------------------------------------------------------
-loginResolver :: GraphQL o => LoginArgs -> Object o Session
-loginResolver LoginArgs {email, password} = do
-    res <- lift $ runSelect $ findUserByEmail email
-    case res of
-        [userData]
-            | validateHashedPassword (userPasswordHash userData) password -> do
-                time <- liftIO getCurrentTime
-                secret <- lift $ asks (jwtSecret . config)
-                let jwt = makeJWT time secret (userId userData)
-                return Session {token = pure jwt, user = userResolver userData}
-        _ -> failRes "Wrong email or password"
-
--------------------------------------------------------------------------------
-registerResolver :: RegisterArgs -> Object MUTATION Session
-registerResolver RegisterArgs {email, password, name} = do
-    res :: [UserData] <- lift $ runSelect $ findUserByEmail email
-    case res of
-        _:_ -> failRes "This email is already taken"
-        [] -> do
-            ph <- liftIO $ hashPassword password
-            lift $ runInsert $ insertUser (email, ph, name)
-            loginResolver LoginArgs {email, password}
-
--------------------------------------------------------------------------------
-userResolver :: GraphQL o => UserData -> Object o User
-userResolver UserData {userId, userEmail, userName} =
-    return User {id = pure userId, email = pure userEmail, name = pure userName}
-
--------------------------------------------------------------------------------
--- | 
---
-api :: B.ByteString -> Web B.ByteString
-api = interpreter rootResolver
-
