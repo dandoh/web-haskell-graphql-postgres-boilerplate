@@ -35,3 +35,6 @@ This boilerplate wires up:
   - `register(email: String, password: String, name: String) { token user { id } }`
 - Authentication using JWT
 - Monad transformers
+
+## Running
+

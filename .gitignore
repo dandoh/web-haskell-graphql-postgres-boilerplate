@@ -31,4 +31,5 @@ cabal.project.local~
 *.db3
 linkedin.yaml
 *.jar
+.env
 screenshot.png
