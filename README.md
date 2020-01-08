@@ -54,5 +54,5 @@ This boilerplate wires up:
   - More uses refer https://github.com/amacneil/dbmate
 - Run webserver
   ```terminal
-  stack run
+  $ stack run
   ```
