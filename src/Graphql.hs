@@ -33,31 +33,33 @@ import Opaleye (FromFields, Insert, Select, Update)
 -------------------------------------------------------------------------------
 type UserID = Int
 
-data Env =
-    Env
-        { dbPool :: Pool Connection
-        , config :: Config
-        , currentUserId :: Maybe UserID
-        }
+data Env
+  = Env
+      { dbPool :: Pool Connection,
+        config :: Config,
+        currentUserId :: Maybe UserID
+      }
 
-newtype Web a =
-    Web
-        { runWeb :: ReaderT Env IO a
-        }
-    deriving ( Functor
-             , Applicative
-             , Monad
-             , MonadReader Env
-             , MonadIO
-             , MonadBase IO
-             , MonadBaseControl IO
-             )
+newtype Web a
+  = Web
+      { runWeb :: ReaderT Env IO a
+      }
+  deriving
+    ( Functor,
+      Applicative,
+      Monad,
+      MonadReader Env,
+      MonadIO,
+      MonadBase IO,
+      MonadBaseControl IO
+    )
 
 -- |
 -------------------------------------------------------------------------------
 importGQLDocument "schema.graphql"
 
 -------------------------------------------------------------------------------
+
 -- | Resolve single value
 type Value (o :: OperationType) a = Resolver o () Web a
 
@@ -65,62 +67,72 @@ type Value (o :: OperationType) a = Resolver o () Web a
 type Object (o :: OperationType) a = Resolver o () Web (a (Resolver o () Web))
 
 -- | Resolve (Maybe object)
-type OptionalObject (o :: OperationType) a
-     = Resolver o () Web (Maybe (a (Resolver o () Web)))
+type OptionalObject (o :: OperationType) a =
+  Resolver o () Web (Maybe (a (Resolver o () Web)))
 
 -- | Resolve [object]
-type ArrayObject (o :: OperationType) a
-     = Resolver o () Web [a (Resolver o () Web)]
+type ArrayObject (o :: OperationType) a =
+  Resolver o () Web [a (Resolver o () Web)]
 
-type GraphQL o
-     = ( MonadIO (Resolver o () Web)
-       , WithOperation o
-       , MonadTrans (Resolver o ()))
+type GraphQL o =
+  ( MonadIO (Resolver o () Web),
+    WithOperation o,
+    MonadTrans (Resolver o ())
+  )
 
 -------------------------------------------------------------------------------
+
 -- |
 runSelect ::
-       GraphQL o
-    => Default FromFields fields haskells =>
-           Select fields -> Value o [haskells]
+  GraphQL o =>
+  Default FromFields fields haskells =>
+  Select fields ->
+  Value o [haskells]
 runSelect select = do
-    db <- lift $ asks dbPool
-    liftIO $
-        withResource db $ \connection -> Opaleye.runSelect connection select
+  db <- lift $ asks dbPool
+  liftIO
+    $ withResource db
+    $ \connection -> Opaleye.runSelect connection select
 
 -------------------------------------------------------------------------------
 runSelectOne ::
-       GraphQL o
-    => Default FromFields fields haskells =>
-           Select fields -> String -> Value o haskells
+  GraphQL o =>
+  Default FromFields fields haskells =>
+  Select fields ->
+  String ->
+  Value o haskells
 runSelectOne select errorMsg = do
-    db <- lift $ asks dbPool
-    xs <-
-        liftIO $
-        withResource db $ \connection -> Opaleye.runSelect connection select
-    case xs of
-        [x] -> return x
-        _ -> failRes errorMsg
+  db <- lift $ asks dbPool
+  xs <-
+    liftIO
+      $ withResource db
+      $ \connection -> Opaleye.runSelect connection select
+  case xs of
+    [x] -> return x
+    _ -> failRes errorMsg
 
 -------------------------------------------------------------------------------
+
 -- |
 runInsert :: GraphQL o => Insert haskells -> Value o haskells
 runInsert insert = do
-    db <- lift $ asks dbPool
-    liftIO $
-        withResource db $ \connection -> Opaleye.runInsert_ connection insert
+  db <- lift $ asks dbPool
+  liftIO
+    $ withResource db
+    $ \connection -> Opaleye.runInsert_ connection insert
 
 -------------------------------------------------------------------------------
 runUpdate :: GraphQL o => Update haskells -> Value o haskells
 runUpdate update = do
-    db <- lift $ asks dbPool
-    liftIO $
-        withResource db $ \connection -> Opaleye.runUpdate_ connection update
+  db <- lift $ asks dbPool
+  liftIO
+    $ withResource db
+    $ \connection -> Opaleye.runUpdate_ connection update
 
 -------------------------------------------------------------------------------
 requireAuthorized :: GraphQL o => Value o UserID
 requireAuthorized = do
-    maybeID <- lift $ asks currentUserId
-    case maybeID of
-        Just id -> return id
-        _ -> failRes "Not authorized"
+  maybeID <- lift $ asks currentUserId
+  case maybeID of
+    Just id -> return id
+    _ -> failRes "Not authorized"

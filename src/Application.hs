@@ -24,26 +24,27 @@ api = interpreter rootResolver
 -------------------------------------------------------------------------------
 app :: IO ()
 app = do
-    init <- runExceptT initialize
-    case init of
-        Left err -> putStrLn err
-        Right res -> webServer res
+  init <- runExceptT initialize
+  case init of
+    Left err -> putStrLn err
+    Right res -> webServer res
 
 -------------------------------------------------------------------------------
 webServer :: (Config, Pool Connection) -> IO ()
 webServer (config, connectionPool) =
-    scotty 8080 $
-    post "/api" $ do
-        reqBody <- body
-        reqHeaders <- headers
-        currentTime <- liftIO getCurrentTime
-        let currentUserId =
-                case find ((== "Authorization") . fst) reqHeaders of
-                    Just (_, token) ->
-                        verifyJWT
-                            currentTime
-                            (jwtSecret config)
-                            (T.pack . LT.unpack $ token)
-                    _ -> Nothing
-        let env = Env connectionPool config currentUserId
-        raw =<< (liftIO . flip runReaderT env . runWeb $ api reqBody)
+  scotty 8080
+    $ post "/api"
+    $ do
+      reqBody <- body
+      reqHeaders <- headers
+      currentTime <- liftIO getCurrentTime
+      let currentUserId =
+            case find ((== "Authorization") . fst) reqHeaders of
+              Just (_, token) ->
+                verifyJWT
+                  currentTime
+                  (jwtSecret config)
+                  (T.pack . LT.unpack $ token)
+              _ -> Nothing
+      let env = Env connectionPool config currentUserId
+      raw =<< (liftIO . flip runReaderT env . runWeb $ api reqBody)
