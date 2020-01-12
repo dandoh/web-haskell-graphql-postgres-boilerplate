@@ -7,6 +7,8 @@
         id: Int!
         email: String!
         name: String!
+        updatedAt: String!
+        createdAt: String!
     }
 
     type Session {
