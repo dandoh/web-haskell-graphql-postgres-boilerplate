@@ -5,7 +5,7 @@ create table users
     email         varchar not null unique,
     password_hash varchar not null,
     name          varchar not null,
-    inserted_at   timestamptz not null default now(),
+    created_at   timestamptz not null default now(),
     updated_at    timestamptz not null default now()
 );
 
