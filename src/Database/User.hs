@@ -7,7 +7,7 @@ import GHC.Int (Int64)
 import Opaleye
 
 -------------------------------------------------------------------------------
-userSelect :: Select UserF
+userSelect :: Select UserRead
 userSelect = selectTable userTable
 
 -------------------------------------------------------------------------------
@@ -28,7 +28,7 @@ insertUser (userEmail, userPasswordHash, userName) =
         }
 
 -------------------------------------------------------------------------------
-findUserByEmail :: Text -> Select UserF
+findUserByEmail :: Text -> Select UserRead
 findUserByEmail email =
     proc () ->
   do user <- userSelect -< ()
@@ -36,7 +36,7 @@ findUserByEmail email =
      returnA -< user
 
 -------------------------------------------------------------------------------
-findUserByID :: Int -> Select UserF
+findUserByID :: Int -> Select UserRead
 findUserByID id =
     proc () ->
   do user <- userSelect -< ()
