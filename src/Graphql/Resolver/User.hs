@@ -32,19 +32,17 @@ userResolver user =
           createdAt = pure . T.pack . show $ recordCreatedAt user,
           updatedAt = pure . T.pack . show $ recordUpdatedAt user
         }
+
 -------------------------------------------------------------------------------
 loginResolver :: GraphQL o => LoginArgs -> Object o Session
 loginResolver LoginArgs {email, password} = do
   res :: [UserData] <- runSelect $ findUserByEmail email
   case res of
-    [user]
-      | validateHashedPassword
-          (userPasswordHash . record $ user)
-          password -> do
-        time <- liftIO getCurrentTime
-        secret <- lift $ asks (jwtSecret . config)
-        let jwt = makeJWT time secret (userId . record $ user)
-        return Session {token = pure jwt, user = userResolver user}
+    [user] | validateHashedPassword (userPasswordHash . record $ user) password -> do
+      time <- liftIO getCurrentTime
+      secret <- lift $ asks (jwtSecret . config)
+      let jwt = makeJWT time secret (userId . record $ user)
+      return Session {token = pure jwt, user = userResolver user}
     _ -> failRes "Wrong email or password"
 
 -------------------------------------------------------------------------------
@@ -68,8 +66,7 @@ myUserInfoResolver = do
 changePasswordResolver :: ChangePasswordArgs -> Value MUTATION Bool
 changePasswordResolver ChangePasswordArgs {oldPassword, newPassword} = do
   myUserId <- requireAuthorized
-  userData :: UserData <-
-    runSelectOne (findUserByID myUserId) "Invalid user"
+  userData :: UserData <- runSelectOne (findUserByID myUserId) "Invalid user"
   if validateHashedPassword (userPasswordHash . record $ userData) oldPassword
     then do
       ph <- liftIO $ hashPassword newPassword
