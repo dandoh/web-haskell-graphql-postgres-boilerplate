@@ -1,40 +1,58 @@
 module Database.Model where
 
+import Data.Function ((&))
+import Data.Profunctor.Product.Default (Default)
 import Data.Profunctor.Product.TH (makeAdaptorAndInstance)
 import Data.Text (Text)
+import Data.Time (UTCTime)
+import Database.Base
 import Opaleye
+import Opaleye.Internal.Manipulation (Updater)
 
 -------------------------------------------------------------------------------
-type F a = Field a
+data UserT a b c d
+  = UserRecord
+      { userId :: a,
+        userEmail :: b,
+        userPasswordHash :: c,
+        userName :: d
+      }
 
--------------------------------------------------------------------------------
-data UserData' a b c d =
-    UserData
-        { userId :: a
-        , userEmail :: b
-        , userPasswordHash :: c
-        , userName :: d
-        }
+$(makeAdaptorAndInstance "pUser" ''UserT)
 
-type UserData = UserData' Int Text Text Text
+type UserData =
+  EntityData
+    ( UserT
+        Int
+        Text
+        Text
+        Text
+    )
 
--- `Maybe userId` because inserting doesn't require id
-type UserWriteF
-     = UserData' (Maybe (F SqlInt4)) (F SqlText) (F SqlText) (F SqlText)
+type UserWriteField =
+  EntityWriteField
+    ( UserT
+        (Maybe (F SqlInt4)) -- use Maybe because we don't need to specify id when inserting
+        (F SqlText)
+        (F SqlText)
+        (F SqlText)
+    )
 
-type UserF = UserData' (F SqlInt4) (F SqlText) (F SqlText) (F SqlText)
+type UserField =
+  EntityField
+    ( UserT (F SqlInt4)
+        (F SqlText)
+        (F SqlText)
+        (F SqlText)
+    )
 
-$(makeAdaptorAndInstance "pUser" ''UserData')
-
-userTable :: Table UserWriteF UserF
+userTable :: Table UserWriteField UserField
 userTable =
-    table
-        "users"
-        (pUser
-             UserData
-                 { userId = tableField "id"
-                 , userEmail = tableField "email"
-                 , userPasswordHash = tableField "password_hash"
-                 , userName = tableField "name"
-                 })
+  table "users" . pEntity . withTimestampFields $
+    pUser UserRecord
+      { userId = tableField "id",
+        userEmail = tableField "email",
+        userPasswordHash = tableField "password_hash",
+        userName = tableField "name"
+      }
 -------------------------------------------------------------------------------
