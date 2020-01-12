@@ -5,6 +5,8 @@ import Data.Profunctor.Product.TH (makeAdaptorAndInstance)
 import Data.Text (Text)
 import Data.Time (UTCTime)
 import Opaleye
+import Data.Profunctor.Product.Default (Default)
+import Opaleye.Internal.Manipulation (Updater)
 
 -------------------------------------------------------------------------------
 type F a = Field a
@@ -12,7 +14,7 @@ type F a = Field a
 -------------------------------------------------------------------------------
 data EntityT a b c =
     EntityT
-        { value :: a
+        { record :: a
         , createdAt :: b
         , updatedAt :: c
         }
@@ -22,7 +24,7 @@ $(makeAdaptorAndInstance "pEntity" ''EntityT)
 -------------------------------------------------------------------------------
 wrapEntityMapping :: a -> EntityT a (TableFields () ()) (TableFields () ())
 wrapEntityMapping mapping =
-    EntityT {value = mapping, createdAt = pure (), updatedAt = pure ()}
+    EntityT {record = mapping, createdAt = pure (), updatedAt = pure ()}
 
 withTimestamps ::
        EntityT a (TableFields () ()) (TableFields () ())
@@ -30,6 +32,19 @@ withTimestamps ::
 withTimestamps mapping =
     mapping
         {createdAt = optional "created_at", updatedAt = optional "updated_at"}
+
+-------------------------------------------------------------------------------
+withTimestamp :: [row] -> [EntityT row (Maybe timestamp) (Maybe timestamp)]
+withTimestamp = map f
+  where
+    f r = EntityT {record = r, createdAt = Nothing, updatedAt = Nothing}
+
+updateRecord ::
+       Default Updater (EntityT row t t) fieldsW
+    => (row -> row)
+    -> EntityT row t t
+    -> fieldsW
+updateRecord f = updateEasy (\r -> r {record = f (record r)})
 
 -------------------------------------------------------------------------------
 type Entity a = EntityT a UTCTime UTCTime
@@ -47,7 +62,7 @@ data UserT a b c d =
         , userPasswordHash :: c
         , userName :: d
         }
-        
+
 $(makeAdaptorAndInstance "pUser" ''UserT)
 
 type UserData = UserT Int Text Text Text
@@ -80,15 +95,15 @@ newUserTable =
     wrapEntityMapping &
     withTimestamps
 
-userTable :: Table UserWrite UserRead
-userTable =
-    table
-        "users"
-        (pUser
-             UserData
-                 { userId = tableField "id"
-                 , userEmail = tableField "email"
-                 , userPasswordHash = tableField "password_hash"
-                 , userName = tableField "name"
-                 })
+--userTable :: Table UserWrite UserRead
+--userTable =
+--    table
+--        "users"
+--        (pUser
+--             UserData
+--                 { userId = tableField "id"
+--                 , userEmail = tableField "email"
+--                 , userPasswordHash = tableField "password_hash"
+--                 , userName = tableField "name"
+--                 })
 -------------------------------------------------------------------------------

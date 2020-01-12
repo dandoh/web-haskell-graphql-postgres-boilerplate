@@ -21,27 +21,27 @@ import GHC.Int (Int64)
 import Graphql
 
 -------------------------------------------------------------------------------
-userResolver :: GraphQL o => UserData -> Object o User
-userResolver UserData {userId, userEmail, userName} =
+userResolver :: GraphQL o => NewUserData -> Object o User
+userResolver EntityT { record = UserData {userId, userEmail, userName} } =
     return User {id = pure userId, email = pure userEmail, name = pure userName}
 
 -------------------------------------------------------------------------------
 loginResolver :: GraphQL o => LoginArgs -> Object o Session
 loginResolver LoginArgs {email, password} = do
-    res <- runSelect $ findUserByEmail email
+    res :: [NewUserData] <- runSelect $ findUserByEmail email
     case res of
         [userData]
-            | validateHashedPassword (userPasswordHash userData) password -> do
+            | validateHashedPassword (userPasswordHash . record $ userData) password -> do
                 time <- liftIO getCurrentTime
                 secret <- lift $ asks (jwtSecret . config)
-                let jwt = makeJWT time secret (userId userData)
+                let jwt = makeJWT time secret (userId . record $ userData)
                 return Session {token = pure jwt, user = userResolver userData}
         _ -> failRes "Wrong email or password"
 
 -------------------------------------------------------------------------------
 registerResolver :: RegisterArgs -> Object MUTATION Session
 registerResolver RegisterArgs {email, password, name} = do
-    res :: [UserData] <- runSelect $ findUserByEmail email
+    res :: [NewUserData] <- runSelect $ findUserByEmail email
     case res of
         _:_ -> failRes "This email is already taken"
         [] -> do
@@ -59,8 +59,8 @@ myUserInfoResolver = do
 changePasswordResolver :: ChangePasswordArgs -> Value MUTATION Bool
 changePasswordResolver ChangePasswordArgs {oldPassword, newPassword} = do
     myUserId <- requireAuthorized
-    userData :: UserData <- runSelectOne (findUserByID myUserId) "Invalid user"
-    if validateHashedPassword (userPasswordHash userData) oldPassword
+    userData :: NewUserData <- runSelectOne (findUserByID myUserId) "Invalid user"
+    if validateHashedPassword (userPasswordHash . record $ userData) oldPassword
         then do
             ph <- liftIO $ hashPassword newPassword
             runUpdate $ updateUserPassword myUserId ph
