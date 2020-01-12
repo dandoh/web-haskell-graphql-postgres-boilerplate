@@ -15,16 +15,16 @@ import qualified Data.Text as T
 import qualified Data.Text.Lazy as LT
 import Data.Time.Clock (getCurrentTime)
 import Database.Base
-import Database.Model
+import qualified Database.Model as DB
 import Database.PostgreSQL.Simple (Connection)
 import Database.User
 import GHC.Int (Int64)
 import Graphql
 
 -------------------------------------------------------------------------------
-userResolver :: GraphQL o => UserData -> Object o User
+userResolver :: GraphQL o => DB.User -> Object o User
 userResolver user =
-  let UserRecord {userId, userEmail, userName} = record user
+  let DB.User {userId, userEmail, userName} = record user
    in return User
         { id = pure userId,
           email = pure userEmail,
@@ -36,19 +36,19 @@ userResolver user =
 -------------------------------------------------------------------------------
 loginResolver :: GraphQL o => LoginArgs -> Object o Session
 loginResolver LoginArgs {email, password} = do
-  res :: [UserData] <- runSelect $ findUserByEmail email
+  res :: [DB.User] <- runSelect $ findUserByEmail email
   case res of
-    [user] | validateHashedPassword (userPasswordHash . record $ user) password -> do
+    [user] | validateHashedPassword (DB.userPasswordHash . record $ user) password -> do
       time <- liftIO getCurrentTime
       secret <- lift $ asks (jwtSecret . config)
-      let jwt = makeJWT time secret (userId . record $ user)
+      let jwt = makeJWT time secret (DB.userId . record $ user)
       return Session {token = pure jwt, user = userResolver user}
     _ -> failRes "Wrong email or password"
 
 -------------------------------------------------------------------------------
 registerResolver :: RegisterArgs -> Object MUTATION Session
 registerResolver RegisterArgs {email, password, name} = do
-  res :: [UserData] <- runSelect $ findUserByEmail email
+  res :: [DB.User] <- runSelect $ findUserByEmail email
   case res of
     _ : _ -> failRes "This email is already taken"
     [] -> do
@@ -66,8 +66,8 @@ myUserInfoResolver = do
 changePasswordResolver :: ChangePasswordArgs -> Value MUTATION Bool
 changePasswordResolver ChangePasswordArgs {oldPassword, newPassword} = do
   myUserId <- requireAuthorized
-  userData :: UserData <- runSelectOne (findUserByID myUserId) "Invalid user"
-  if validateHashedPassword (userPasswordHash . record $ userData) oldPassword
+  userData :: DB.User <- runSelectOne (findUserByID myUserId) "Invalid user"
+  if validateHashedPassword (DB.userPasswordHash . record $ userData) oldPassword
     then do
       ph <- liftIO $ hashPassword newPassword
       runUpdate $ updateUserPassword myUserId ph

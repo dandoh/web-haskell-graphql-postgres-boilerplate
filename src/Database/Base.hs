@@ -12,30 +12,30 @@ import Opaleye.Internal.Manipulation (Updater)
 type F a = Field a
 
 -------------------------------------------------------------------------------
-data Entity a b c
+data EntityT a b c
   = Entity
       { record :: a,
         recordCreatedAt :: b,
         recordUpdatedAt :: c
       }
 
-$(makeAdaptorAndInstance "pEntity" ''Entity)
+$(makeAdaptorAndInstance "pEntity" ''EntityT)
 
 -------------------------------------------------------------------------------
-type EntityData a =
-  Entity
+type Entity a =
+  EntityT
     a
     UTCTime
     UTCTime
 
 type EntityWriteField a =
-  Entity
+  EntityT
     a
     (Maybe (F SqlTimestamptz))
     (Maybe (F SqlTimestamptz))
 
 type EntityField a =
-  Entity
+  EntityT
     a
     (F SqlTimestamptz)
     (F SqlTimestamptz)
@@ -43,7 +43,7 @@ type EntityField a =
 -------------------------------------------------------------------------------
 withTimestampFields ::
   a ->
-  Entity
+  EntityT
     a
     (TableFields (Maybe (F SqlTimestamptz)) (F SqlTimestamptz))
     (TableFields (Maybe (F SqlTimestamptz)) (F SqlTimestamptz))
@@ -55,15 +55,15 @@ withTimestampFields mapping =
     }
 
 -------------------------------------------------------------------------------
-withTimestamp :: [row] -> [Entity row (Maybe timestamp) (Maybe timestamp)]
+withTimestamp :: [row] -> [EntityT row (Maybe timestamp) (Maybe timestamp)]
 withTimestamp = map f
   where
     f r = Entity {record = r, recordCreatedAt = Nothing, recordUpdatedAt = Nothing}
 
 -------------------------------------------------------------------------------
 updateRecord ::
-  Default Updater (Entity record t t) fieldsW =>
+  Default Updater (EntityT record t t) fieldsW =>
   (record -> record) ->
-  Entity record t t ->
+  EntityT record t t ->
   fieldsW
 updateRecord f = updateEasy (\r -> r {record = f (record r)})

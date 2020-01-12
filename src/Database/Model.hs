@@ -11,7 +11,7 @@ import Opaleye.Internal.Manipulation (Updater)
 
 -------------------------------------------------------------------------------
 data UserT a b c d
-  = UserRecord
+  = User
       { userId :: a,
         userEmail :: b,
         userPasswordHash :: c,
@@ -20,8 +20,8 @@ data UserT a b c d
 
 $(makeAdaptorAndInstance "pUser" ''UserT)
 
-type UserData =
-  EntityData
+type User =
+  Entity
     ( UserT
         Int
         Text
@@ -49,7 +49,7 @@ type UserField =
 userTable :: Table UserWriteField UserField
 userTable =
   table "users" . pEntity . withTimestampFields $
-    pUser UserRecord
+    pUser User
       { userId = tableField "id",
         userEmail = tableField "email",
         userPasswordHash = tableField "password_hash",

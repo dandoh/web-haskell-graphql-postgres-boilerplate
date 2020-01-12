@@ -18,7 +18,7 @@ insertUser (userEmail, userPasswordHash, userName) =
     { iTable = userTable,
       iRows =
         withTimestamp
-          [ UserRecord
+          [ User
               { userId = Nothing,
                 userEmail = toFields userEmail,
                 userPasswordHash = toFields userPasswordHash,

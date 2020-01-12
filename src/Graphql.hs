@@ -22,9 +22,7 @@ import Data.Text (Text)
 import qualified Data.Text as T
 import qualified Data.Text.Lazy as LT
 import Data.Time.Clock (getCurrentTime)
-import Database.Model
 import Database.PostgreSQL.Simple (Connection)
-import Database.User
 import GHC.Int (Int64)
 import qualified Opaleye
 import Opaleye (FromFields, Insert, Select, Update)
