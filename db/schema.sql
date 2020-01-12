@@ -9,6 +9,20 @@ SET xmloption = content;
 SET client_min_messages = warning;
 SET row_security = off;
 
+--
+-- Name: update_timestamp(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.update_timestamp() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+    NEW.updated_at = now();
+    RETURN NEW;
+END;
+$$;
+
+
 SET default_tablespace = '';
 
 SET default_table_access_method = heap;
@@ -30,7 +44,9 @@ CREATE TABLE public.users (
     id integer NOT NULL,
     email character varying NOT NULL,
     password_hash character varying NOT NULL,
-    name character varying NOT NULL
+    name character varying NOT NULL,
+    inserted_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL
 );
 
 
@@ -78,10 +94,24 @@ ALTER TABLE ONLY public.users
 
 
 --
+-- Name: users_email; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX users_email ON public.users USING btree (email);
+
+
+--
 -- Name: users_id; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE UNIQUE INDEX users_id ON public.users USING btree (id);
+
+
+--
+-- Name: users users_updated_at; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER users_updated_at BEFORE UPDATE ON public.users FOR EACH ROW EXECUTE FUNCTION public.update_timestamp();
 
 
 --
@@ -94,4 +124,5 @@ CREATE UNIQUE INDEX users_id ON public.users USING btree (id);
 --
 
 INSERT INTO public.schema_migrations (version) VALUES
-    ('20200104122356');
+    ('20200104122356'),
+    ('20200112080004');

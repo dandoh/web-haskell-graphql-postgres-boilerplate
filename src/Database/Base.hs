@@ -15,14 +15,14 @@ type F a = Field a
 data Entity a b c
   = Entity
       { record :: a,
-        createdAt :: b,
-        updatedAt :: c
+        recordCreatedAt :: b,
+        recordUpdatedAt :: c
       }
 
 $(makeAdaptorAndInstance "pEntity" ''Entity)
 
 -------------------------------------------------------------------------------
-type EntityRecord a =
+type EntityData a =
   Entity
     a
     UTCTime
@@ -50,15 +50,15 @@ withTimestampFields ::
 withTimestampFields mapping =
   Entity
     { record = mapping,
-      createdAt = optional "created_at",
-      updatedAt = optional "updated_at"
+      recordCreatedAt = tableField "created_at",
+      recordUpdatedAt = tableField "updated_at"
     }
 
 -------------------------------------------------------------------------------
 withTimestamp :: [row] -> [Entity row (Maybe timestamp) (Maybe timestamp)]
 withTimestamp = map f
   where
-    f r = Entity {record = r, createdAt = Nothing, updatedAt = Nothing}
+    f r = Entity {record = r, recordCreatedAt = Nothing, recordUpdatedAt = Nothing}
 
 -------------------------------------------------------------------------------
 updateRecord ::

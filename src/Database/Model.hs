@@ -20,8 +20,8 @@ data UserT a b c d
 
 $(makeAdaptorAndInstance "pUser" ''UserT)
 
-type UserRecord =
-  EntityRecord
+type UserData =
+  EntityData
     ( UserT
         Int
         Text
