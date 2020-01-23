@@ -65,7 +65,7 @@ type Value (o :: OperationType) a = Resolver o () Web a
 type Object (o :: OperationType) a = Resolver o () Web (a (Resolver o () Web))
 
 -- | Resolve (Maybe object)
-type OptionalObject (o :: OperationType) a =
+type MaybeObject (o :: OperationType) a =
   Resolver o () Web (Maybe (a (Resolver o () Web)))
 
 -- | Resolve [object]

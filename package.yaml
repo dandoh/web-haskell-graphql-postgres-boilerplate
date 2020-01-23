@@ -61,6 +61,7 @@ dependencies:
   - containers
   - transformers-base
   - bcrypt
+  - http-types
 
 
 library:

@@ -15,6 +15,7 @@ import Data.Time.Clock (getCurrentTime)
 import Database.PostgreSQL.Simple
 import Graphql
 import Graphql.Resolver.Root
+import Network.HTTP.Types.Status (status200, status404)
 import Web.Scotty
 
 -------------------------------------------------------------------------------
@@ -32,19 +33,19 @@ app = do
 -------------------------------------------------------------------------------
 webServer :: (Config, Pool Connection) -> IO ()
 webServer (config, connectionPool) =
-  scotty 8080
-    $ post "/api"
-    $ do
+  scotty 8080 $ do
+    post "/api" $ do
       reqBody <- body
       reqHeaders <- headers
       currentTime <- liftIO getCurrentTime
-      let currentUserId =
-            case find ((== "Authorization") . fst) reqHeaders of
-              Just (_, token) ->
-                verifyJWT
-                  currentTime
-                  (jwtSecret config)
-                  (T.pack . LT.unpack $ token)
-              _ -> Nothing
+      let currentUserId = case find ((== "Authorization") . fst) reqHeaders of
+            Just (_, token) -> verifyJWT currentTime (jwtSecret config) (T.pack . LT.unpack $ token)
+            _ -> Nothing
       let env = Env connectionPool config currentUserId
-      raw =<< (liftIO . flip runReaderT env . runWeb $ api reqBody)
+      response <- liftIO . flip runReaderT env . runWeb $ api reqBody
+      setHeader "Content-Type" "application/json; charset=utf-8"
+      status status200
+      raw response
+    notFound $ do
+      status status404
+      text "Not found"
