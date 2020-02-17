@@ -15,7 +15,8 @@ import Data.Time.Clock (getCurrentTime)
 import Database.PostgreSQL.Simple
 import Graphql
 import Graphql.Resolver.Root
-import Network.HTTP.Types.Status (status200, status404)
+import Network.HTTP.Types.Status (mkStatus, status200, status404)
+import Network.Wai.Middleware.Cors
 import Web.Scotty
 
 -------------------------------------------------------------------------------
@@ -34,6 +35,8 @@ app = do
 webServer :: (Config, Pool Connection) -> IO ()
 webServer (config, connectionPool) =
   scotty 8080 $ do
+    let myCors = cors (const $ Just (simpleCorsResourcePolicy {corsRequestHeaders = ["Content-Type"]}))
+    middleware myCors
     post "/api" $ do
       reqBody <- body
       reqHeaders <- headers
@@ -42,10 +45,15 @@ webServer (config, connectionPool) =
             Just (_, token) -> verifyJWT currentTime (jwtSecret config) (T.pack . LT.unpack $ token)
             _ -> Nothing
       let env = Env connectionPool config currentUserId
-      response <- liftIO . flip runReaderT env . runWeb $ api reqBody
-      setHeader "Content-Type" "application/json; charset=utf-8"
-      status status200
-      raw response
+      response <- liftIO . flip runReaderT env . runExceptT . runWeb $ api reqBody
+      case response of
+        Left (Error errorStatus errorBody) -> do
+          status (mkStatus errorStatus "")
+          raw errorBody
+        Right jsonResponse -> do
+          setHeader "Content-Type" "application/json; charset=utf-8"
+          status status200
+          raw jsonResponse
     notFound $ do
       status status404
       text "Not found"

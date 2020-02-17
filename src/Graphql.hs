@@ -8,10 +8,11 @@ import Authentication.JWT
 import Authentication.Password
 import Config
 import Control.Monad.Base (MonadBase)
-import Control.Monad.Except (ExceptT, MonadError)
+import Control.Monad.Except (ExceptT, MonadError, throwError)
 import Control.Monad.Reader (MonadReader, ReaderT, asks)
 import Control.Monad.Trans (MonadIO, MonadTrans, liftIO)
 import Control.Monad.Trans.Control (MonadBaseControl)
+import qualified Data.ByteString.Lazy.Char8 as B
 import Data.Morpheus (interpreter)
 import Data.Morpheus.Document (importGQLDocument)
 import Data.Morpheus.Types
@@ -24,29 +25,35 @@ import qualified Data.Text.Lazy as LT
 import Data.Time.Clock (getCurrentTime)
 import Database.PostgreSQL.Simple (Connection)
 import GHC.Int (Int64)
+import Network.HTTP.Types (Status)
 import qualified Opaleye
 import Opaleye (FromFields, Insert, Select, Update)
 
 --
 -------------------------------------------------------------------------------
-type UserID = Int
 
 data Env
   = Env
       { dbPool :: Pool Connection,
         config :: Config,
-        currentUserId :: Maybe UserID
+        currentUserId :: Maybe Int
       }
+
+data Error
+  = Error
+      Int -- HTTP status code
+      B.ByteString -- Error body
 
 newtype Web a
   = Web
-      { runWeb :: ReaderT Env IO a
+      { runWeb :: ExceptT Error (ReaderT Env IO) a
       }
   deriving
     ( Functor,
       Applicative,
       Monad,
       MonadReader Env,
+      MonadError Error,
       MonadIO,
       MonadBase IO,
       MonadBaseControl IO
@@ -128,9 +135,9 @@ runUpdate update = do
     $ \connection -> Opaleye.runUpdate_ connection update
 
 -------------------------------------------------------------------------------
-requireAuthorized :: GraphQL o => Value o UserID
+requireAuthorized :: GraphQL o => Value o Int
 requireAuthorized = do
   maybeID <- lift $ asks currentUserId
   case maybeID of
     Just id -> return id
-    _ -> failRes "Not authorized"
+    _ -> lift $ throwError (Error 401 "Unauthorized")

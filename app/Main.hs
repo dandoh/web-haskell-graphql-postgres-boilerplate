@@ -1,9 +1,6 @@
-
-import System.Environment (lookupEnv)
-import Config
 import Application
+import Config
+import System.Environment (lookupEnv)
 
 main :: IO ()
 main = app
-
-

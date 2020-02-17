@@ -8,6 +8,9 @@ import GHC.Int (Int64)
 import Opaleye
 
 -------------------------------------------------------------------------------
+type UserID = Int
+
+-------------------------------------------------------------------------------
 userSelect :: Select UserField
 userSelect = selectTable userTable
 
@@ -39,7 +42,7 @@ findUserByEmail email =
     returnA -< user
 
 -------------------------------------------------------------------------------
-findUserByID :: Int -> Select UserField
+findUserByID :: UserID -> Select UserField
 findUserByID id =
   proc () -> do
     user <- userSelect -< ()
@@ -48,7 +51,7 @@ findUserByID id =
     returnA -< user
 
 -------------------------------------------------------------------------------
-updateUserPassword :: Int -> Text -> Update Int64
+updateUserPassword :: UserID -> Text -> Update Int64
 updateUserPassword id newPasswordHash =
   Update
     { uTable = userTable,

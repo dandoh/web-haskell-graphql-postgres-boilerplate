@@ -62,6 +62,7 @@ dependencies:
   - transformers-base
   - bcrypt
   - http-types
+  - wai-cors
 
 
 library:
