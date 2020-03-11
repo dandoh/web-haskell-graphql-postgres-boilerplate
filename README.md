@@ -35,8 +35,6 @@ This boilerplate wires up:
 - Reading .env using `envy`
 - Database
 - Graphql API
-  - `login(email: String, password: String) { token user { id } }`
-  - `register(email: String, password: String, name: String) { token user { id } }`
 - Authorization using JWT
 - Monad transformers
 
