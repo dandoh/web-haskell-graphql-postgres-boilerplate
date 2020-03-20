@@ -1,6 +1,11 @@
 .stack-work/
 li-scraper.cabal
 *~
+## Docker root user files
+.bash_history
+.psql_history
+.stack/
+stack.yaml.lock
 ### Haskell template
 dist
 dist-*
