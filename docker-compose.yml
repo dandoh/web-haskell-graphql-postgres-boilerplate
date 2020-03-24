@@ -1,0 +1,16 @@
+version: '3.7'
+
+services:
+
+  workspace:
+    build:
+      context: ./
+      dockerfile: Dockerfile
+      args:
+        pg_password: ${POSTGRES_PASSWORD}
+        pg_user: ${POSTGRES_USER}
+        pg_db: ${POSTGRES_DB}
+    volumes:
+      - ./:/root/
+    ports:
+      - 8080:8080
