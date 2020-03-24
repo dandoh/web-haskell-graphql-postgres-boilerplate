@@ -80,3 +80,11 @@ This boilerplate wires up:
   $ stack run
   ```
 - Now you can visit: http://localhost:8080/ in your local machine.
+
+
+## Contributors
+
+PR are more than welcome. The only note is we use `ormolu` to format codes. 
+
+- [Nhan Thai](https://github.com/dandoh)
+- [Pacific01](https://github.com/Pacific01)
