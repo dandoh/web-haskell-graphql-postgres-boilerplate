@@ -54,6 +54,9 @@ webServer (config, connectionPool) =
           setHeader "Content-Type" "application/json; charset=utf-8"
           status status200
           raw jsonResponse
+    get "/graphiql" $ do
+      setHeader "Content-Type" "text/html; charset=utf-8"
+      file "graphiql.html"
     notFound $ do
       status status404
       text "Not found"
