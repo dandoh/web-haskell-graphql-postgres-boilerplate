@@ -56,3 +56,35 @@ This boilerplate wires up:
   ```terminal
   $ stack run
   ```
+
+## Running on Docker
+- Feed in you database & secret in `.env`:
+  ```terminal
+  $ cp .env.default .env
+  ```
+- (Optional) Edit anything you need in the .env file
+- Create and start docker containers
+  ```terminal
+  $ docker-compose up -d
+  ```
+- Enter inside the docker workspace container
+  ```terminal
+  $ docker exec -it web-haskell-graphql-postgres-boilerplate_workspace_1 /bin/bash
+  ```
+- Migrations
+  ```terminal
+  $ dbmate up
+  ```
+- Run webserver
+  ```terminal
+  $ stack run
+  ```
+- Now you can visit: http://localhost:8080/ in your local machine.
+
+
+## Contributors
+
+PR are more than welcome. The only note is we use `ormolu` to format codes. 
+
+- [Nhan Thai](https://github.com/dandoh)
+- [Pacific01](https://github.com/Pacific01)
