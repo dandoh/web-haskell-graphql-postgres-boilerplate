@@ -56,6 +56,14 @@ This boilerplate wires up:
   ```terminal
   $ stack run
   ```
+  
+Now GraphQL API is at [http://localhost:8080/api](http://localhost:8080/api)
+
+You can also access Graphql Playground at [http://localhost:8080/graphiql](http://localhost:8080/graphiql)
+
+![Playground](images/playground.png)
+
+
 
 ## Running on Docker
 - Feed in you database & secret in `.env`:
@@ -80,6 +88,7 @@ This boilerplate wires up:
   $ stack run
   ```
 - Now you can visit: http://localhost:8080/ in your local machine.
+
 
 
 ## Contributors
