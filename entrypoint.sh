@@ -22,6 +22,6 @@ trap 'kill ${!}; term_handler' SIGTERM
 # wait forever
 while true
 do
-  tail -f /dev/null & wait ${!}
+  ls -d **/*.hs | entr -d -r stack run
 done
 
