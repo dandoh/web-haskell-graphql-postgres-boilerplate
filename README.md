@@ -71,24 +71,19 @@ You can also access Graphql Playground at [http://localhost:8080/graphiql](http:
   $ cp .env.default .env
   ```
 - (Optional) Edit anything you need in the .env file
+
 - Create and start docker containers
   ```terminal
-  $ docker-compose up -d
+  $ docker-compose up
   ```
-- Enter inside the docker workspace container
-  ```terminal
-  $ docker exec -it web-haskell-graphql-postgres-boilerplate_workspace_1 /bin/bash
-  ```
-- Migrations
-  ```terminal
-  $ dbmate up
-  ```
-- Run webserver
-  ```terminal
-  $ stack run
-  ```
+
 - Now you can visit: http://localhost:8080/ in your local machine.
 
+- Migrations will automatically run, and you can run them manually anytime using
+  ```terminal
+  $ docker-compose up dbmate
+  ```
+- Stack will restart whenever you change any .hs file, thanks to [entr](http://eradman.com/entrproject/)
 
 
 ## Contributors
@@ -97,3 +92,4 @@ PR are more than welcome. The only note is we use `ormolu` to format codes.
 
 - [Nhan Thai](https://github.com/dandoh)
 - [Pacific01](https://github.com/Pacific01)
+- [Emad Shaaban](https://github.com/emadshaaban92)
