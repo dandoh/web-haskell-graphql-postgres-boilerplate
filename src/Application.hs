@@ -49,10 +49,13 @@ webServer (config, connectionPool) =
       case response of
         Left (Error errorStatus errorBody) -> do
           status (mkStatus errorStatus "")
+          liftIO $ print "Error"
+          liftIO $ print errorBody
           raw errorBody
         Right jsonResponse -> do
           setHeader "Content-Type" "application/json; charset=utf-8"
           status status200
+          liftIO $ print "Success"
           raw jsonResponse
     get "/graphiql" $ do
       setHeader "Content-Type" "text/html; charset=utf-8"

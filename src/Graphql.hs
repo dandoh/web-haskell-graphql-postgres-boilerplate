@@ -43,6 +43,7 @@ data Error
   = Error
       Int -- HTTP status code
       B.ByteString -- Error body
+  deriving (Show, Ord, Eq)
 
 newtype Web a
   = Web
