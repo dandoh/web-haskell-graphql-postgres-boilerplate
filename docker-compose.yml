@@ -2,15 +2,43 @@ version: '3.7'
 
 services:
 
+  db:
+    image: postgres:12.2
+    environment:
+      - POSTGRES_PASSWORD
+      - POSTGRES_USER
+      - POSTGRES_DB
+    volumes: 
+      - db-data:/var/lib/postgresql/data
+
   workspace:
-    build:
-      context: ./
-      dockerfile: Dockerfile
-      args:
-        pg_password: ${POSTGRES_PASSWORD}
-        pg_user: ${POSTGRES_USER}
-        pg_db: ${POSTGRES_DB}
+    build: ./
+    depends_on: 
+      - db
+    environment:
+      - DATABASE_URL=postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}?sslmode=disable
+      - JWT_SECRET
     volumes:
-      - ./:/root/
+      - ./app:/root/app
+      - ./images:/root/images
+      - ./src:/root/src
+      - ./.env:/root/.env
+      - ./graphiql.html:/root/graphiql.html
+      - ./schema.graphql:/root/schema.graphql
+      - ./package.yaml:/root/package.yaml
+      - ./stack.yaml:/root/stack.yaml
     ports:
       - 8080:8080
+
+  dbmate:
+    image: amacneil/dbmate:v1.8.0
+    environment:
+      - DATABASE_URL=postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}?sslmode=disable 
+    depends_on: 
+      - db
+    volumes:
+      - ./db:/db/
+    command: --wait up
+
+volumes:
+  db-data:
