@@ -30,6 +30,7 @@ default-extensions:
   - QuasiQuotes
   - ScopedTypeVariables
   - DuplicateRecordFields
+  - RankNTypes
   - LambdaCase
   - NamedFieldPuns
 
@@ -53,6 +54,7 @@ dependencies:
   - opaleye
   - unordered-containers
   - morpheus-graphql
+  - morpheus-graphql-core
   - scotty
   - envy
   - load-env
