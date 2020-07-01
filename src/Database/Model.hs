@@ -49,10 +49,11 @@ type UserField =
 userTable :: Table UserWriteField UserField
 userTable =
   table "users" . pEntity . withTimestampFields $
-    pUser User
-      { userId = tableField "id",
-        userEmail = tableField "email",
-        userPasswordHash = tableField "password_hash",
-        userName = tableField "name"
-      }
+    pUser
+      User
+        { userId = tableField "id",
+          userEmail = tableField "email",
+          userPasswordHash = tableField "password_hash",
+          userName = tableField "name"
+        }
 -------------------------------------------------------------------------------

@@ -25,13 +25,14 @@ import Graphql
 userResolver :: GraphQL o => DB.User -> Object o User
 userResolver user =
   let DB.User {userId, userEmail, userName} = record user
-   in return User
-        { id = pure userId,
-          email = pure userEmail,
-          name = pure userName,
-          createdAt = pure . T.pack . show $ recordCreatedAt user,
-          updatedAt = pure . T.pack . show $ recordUpdatedAt user
-        }
+   in return
+        User
+          { id = pure userId,
+            email = pure userEmail,
+            name = pure userName,
+            createdAt = pure . T.pack . show $ recordCreatedAt user,
+            updatedAt = pure . T.pack . show $ recordUpdatedAt user
+          }
 
 -------------------------------------------------------------------------------
 loginResolver :: GraphQL o => LoginArgs -> Object o Session

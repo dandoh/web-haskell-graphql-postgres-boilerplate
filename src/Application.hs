@@ -13,6 +13,7 @@ import qualified Data.Text as T
 import qualified Data.Text.Lazy as LT
 import Data.Time.Clock (getCurrentTime)
 import Database.PostgreSQL.Simple
+import Error
 import Graphql
 import Graphql.Resolver.Root
 import Network.HTTP.Types.Status (mkStatus, status200, status404)
@@ -32,6 +33,17 @@ app = do
     Right res -> webServer res
 
 -------------------------------------------------------------------------------
+
+extractAuthorizationToken :: [(LT.Text, LT.Text)] -> Maybe LT.Text
+extractAuthorizationToken headers = case find ((== "authorization") . LT.toLower . fst) headers of
+  Just (_, authorization) -> case LT.splitOn " " authorization of
+    [token] -> Just token
+    ["Bearer", token] -> Just token
+    ["bearer", token] -> Just token
+    _ -> Nothing
+  _ -> Nothing
+
+-------------------------------------------------------------------------------
 webServer :: (Config, Pool Connection) -> IO ()
 webServer (config, connectionPool) =
   scotty 8080 $ do
@@ -41,21 +53,18 @@ webServer (config, connectionPool) =
       reqBody <- body
       reqHeaders <- headers
       currentTime <- liftIO getCurrentTime
-      let currentUserId = case find ((== "Authorization") . fst) reqHeaders of
-            Just (_, token) -> verifyJWT currentTime (jwtSecret config) (T.pack . LT.unpack $ token)
+      let currentUserId = case extractAuthorizationToken reqHeaders of
+            Just token -> verifyJWT currentTime (jwtSecret config) (T.pack . LT.unpack $ token)
             _ -> Nothing
       let env = Env connectionPool config currentUserId
       response <- liftIO . flip runReaderT env . runExceptT . runWeb $ api reqBody
       case response of
-        Left (Error errorStatus errorBody) -> do
-          status (mkStatus errorStatus "")
-          liftIO $ print "Error"
-          liftIO $ print errorBody
-          raw errorBody
+        Left error -> do
+          status status200
+          json $ toErrorResponse error
         Right jsonResponse -> do
           setHeader "Content-Type" "application/json; charset=utf-8"
           status status200
-          liftIO $ print "Success"
           raw jsonResponse
     get "/graphiql" $ do
       setHeader "Content-Type" "text/html; charset=utf-8"
