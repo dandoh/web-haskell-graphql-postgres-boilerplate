@@ -76,3 +76,9 @@ changePasswordResolver ChangePasswordArgs {oldPassword, newPassword} = do
       runUpdate $ updateUserPassword myUserId ph
       return True
     else fail "Wrong old password"
+
+-------------------------------------------------------------------------------
+allUsersResolver :: GraphQL o => Composed o [] User
+allUsersResolver = do
+  res :: [DB.User] <- runSelect userSelect
+  traverse userResolver res
