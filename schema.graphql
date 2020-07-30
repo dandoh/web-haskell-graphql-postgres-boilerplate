@@ -14,6 +14,7 @@ type Session {
 type Query {
     login(email: String!, password: String!): Session!
     myUserInfo: User!
+    allUsers: [User!]!
 }
 
 type Mutation {
