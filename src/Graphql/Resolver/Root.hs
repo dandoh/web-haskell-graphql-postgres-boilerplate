@@ -10,4 +10,4 @@ rootResolver =
   where
     queryResolver = Query {login = loginResolver, myUserInfo = myUserInfoResolver, allUsers = allUsersResolver}
     mutationResolver = Mutation {register = registerResolver, changePassword = changePasswordResolver}
-    subscriptionResolver = Undefined
+    subscriptionResolver = undefined
