@@ -1,6 +1,6 @@
 name:                web-haskell
 version:             0.1.0.0
-github:              ""
+github:              "dandoh/web-haskell-graphql-postgres-boilerplate"
 license:             BSD3
 author:              "dandoh (Nhan Thai)"
 maintainer:          "dandoh (Nhan Thai)"
@@ -10,7 +10,7 @@ extra-source-files:
   - README.md
   - ChangeLog.md
 
-description:         Please see the README on GitHub at <https://github.com/dandoh/web-haskell>
+description:          Please see the README on GitHub at <https://github.com/dandoh/web-haskell-graphql-postgres-boilerplate>
 
 default-extensions:
   - OverloadedStrings
@@ -36,7 +36,7 @@ default-extensions:
 
 
 dependencies:
-  - base 
+  - base
   - transformers
   - text
   - mtl
