@@ -1,4 +1,4 @@
-FROM haskell:8.8.3
+FROM haskell:9.2.7
 
 # Install libpq-dev for postgres haskell lib to be built & entr for detecting
 # changes and restarting stack
@@ -10,7 +10,6 @@ WORKDIR /root/
 
 # Prebuild dependencies
 COPY stack.* package.yaml /root/
-RUN stack setup
 RUN stack build --only-dependencies
 
 COPY ./entrypoint.sh /opt/entrypoint.sh
