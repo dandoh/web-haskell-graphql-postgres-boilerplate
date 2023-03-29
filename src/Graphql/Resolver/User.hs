@@ -43,7 +43,7 @@ loginResolver LoginArgs {email, password} = do
   case res of
     [user] | validateHashedPassword (DB.userPasswordHash . record $ user) password -> do
       time <- liftIO getCurrentTime
-      secret <- lift $ asks (jwtSecret . config)
+      secret <- lift $ asks (jwtSecret . Graphql.config)
       let jwt = makeJWT time secret (DB.userId . record $ user)
       return Session {token = pure jwt, user = userResolver user}
     _ -> fail "Wrong email or password"

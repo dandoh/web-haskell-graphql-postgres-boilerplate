@@ -44,7 +44,7 @@ verifyJWT :: UTCTime -> SecretKey -> Token -> Maybe Int
 verifyJWT currentTime secret token = do
   let signer = hmacSecret secret
   unverifiedJWT <- decode token
-  verifiedJWT <- verify signer unverifiedJWT
+  verifiedJWT <- verify (toVerify signer) unverifiedJWT
   expTime <- exp . claims $ verifiedJWT
   now <- numericDate $ utcTimeToPOSIXSeconds currentTime
   guard (now < expTime)
